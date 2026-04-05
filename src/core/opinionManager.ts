@@ -26,7 +26,7 @@ export class OpinionManager {
      */
     async startCollection(command: string, description: string) {
         if (this.activeProposal) {
-            return "已经有一个意见征集在进行中了喵！等一会儿再来吧。";
+            return "已经有一个意图征集在进行中了，请稍后再试。";
         }
 
         const id = this.taskQueue.addPendingTask('RCON', command, description);
@@ -38,12 +38,12 @@ export class OpinionManager {
             collectedLogs: []
         };
 
-        // 1. Broadcast the proposal (Tsundere style)
+        // 1. Broadcast the proposal
         const announcement = [
             { text: `<${AGENT_NAME}> `, color: "white" },
-            { text: `哼，我想执行：`, color: "white" },
+            { text: `提案发起：`, color: "white" },
             { text: `/${command}`, color: "aqua", bold: true },
-            { text: `。理由是：${description}。你们有 10 秒说话喵！`, color: "white" }
+            { text: `。原因：${description}。请在 10 秒内发表意见。`, color: "white" }
         ];
         await this.rcon.executeCommand(`tellraw @a ${JSON.stringify(announcement)}`);
 
@@ -77,7 +77,7 @@ export class OpinionManager {
             // 1. Filter chat logs
             const chatLogs = proposal.collectedLogs.filter(l => l.includes('[Async Chat Thread/INFO]'));
             if (chatLogs.length === 0) {
-                await this.reportFailure(proposal.id, "没人理我... 哼，那就不弄了喵！");
+                await this.reportFailure(proposal.id, "在规定的时间内未收到有效反馈，任务已取消。");
                 return;
             }
 
@@ -113,24 +113,24 @@ export class OpinionManager {
                 if (success) {
                     await this.reportSuccess(proposal.id, countS, countA, countB);
                 } else {
-                    await this.reportFailure(proposal.id, "任务执行竟然出错了... 笨蛋服务器！");
+                    await this.reportFailure(proposal.id, "任务执行过程中发生意外错误。");
                 }
             } else {
-                await this.reportFailure(proposal.id, `支持人数不够喵（S:${countS}/1, A:${countA}/3, B:${countB}/5）。既然你们不同意，那就算了！`);
+                await this.reportFailure(proposal.id, `支持度不足（S:${countS}/1, A:${countA}/3, B:${countB}/5），提案未通过。`);
             }
 
         } catch (e) {
             console.error('[OpinionManager] Error finalizing:', e);
-            await this.reportFailure(proposal.id, "分析过程出错了... 啧。");
+            await this.reportFailure(proposal.id, "分析过程异常中断。");
         }
     }
 
     private async reportSuccess(id: string, s: number, a: number, b: number) {
         const msg = [
             { text: `<${AGENT_NAME}> `, color: "white" },
-            { text: `意见征集通过！人数：`, color: "white" },
+            { text: `提案已通过。支持人数：`, color: "white" },
             { text: `S:${s} A:${a} B:${b}`, color: "green" },
-            { text: `。指令已生效喵~`, color: "white" }
+            { text: `。指令已执行。`, color: "white" }
         ];
         await this.rcon.executeCommand(`tellraw @a ${JSON.stringify(msg)}`);
     }
@@ -138,7 +138,7 @@ export class OpinionManager {
     private async reportFailure(id: string, reason: string) {
         const msg = [
             { text: `<${AGENT_NAME}> `, color: "white" },
-            { text: reason, color: "white" }
+            { text: `提案未执行：${reason}`, color: "white" }
         ];
         await this.rcon.executeCommand(`tellraw @a ${JSON.stringify(msg)}`);
     }

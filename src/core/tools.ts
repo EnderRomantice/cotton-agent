@@ -186,7 +186,7 @@ export function createAgentTools(rcon: RconService, taskQueue: TaskQueue, opinio
                     const fullPath = path.join(config.mcServerPath, relPath);
                     await fs.mkdir(path.dirname(fullPath), { recursive: true });
                     await fs.writeFile(fullPath, content, 'utf8');
-                    return `文件 ${relPath} 已成功写入喵~`;
+                    return `文件 ${relPath} 已成功写入。`;
                 } catch (e: any) {
                     return `写入文件失败: ${e.message}`;
                 }
@@ -205,7 +205,7 @@ export function createAgentTools(rcon: RconService, taskQueue: TaskQueue, opinio
                 try {
                     const fullPath = path.join(config.mcServerPath, relPath);
                     await fs.rm(fullPath, { recursive: true, force: true });
-                    return `已清理 ${relPath}，哼，碍眼的东西终于消失了！`;
+                    return `已成功删除 ${relPath}。`;
                 } catch (e: any) {
                     return `删除失败: ${e.message}`;
                 }
