@@ -1,0 +1,28 @@
+{
+  "name": "cotton-agent",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.50",
+    "ai": "^6.0.146",
+    "dotenv": "^17.4.0",
+    "rcon-client": "^4.2.5",
+    "tail": "^2.2.6",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "@types/tail": "^2.2.3",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
+}
