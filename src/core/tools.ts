@@ -52,7 +52,7 @@ export function createAgentTools(rcon: RconService) {
         get_online_players: tool({
             description: '查询当前服务器内在线的玩家列表。让你知道你能和谁进行互动或干预。该调用不需要实际有意义的参数，但如果引擎坚持要求，可传入一个随机_dummy。',
             parameters: z.object({
-                _dummy: z.string().optional()
+                _dummy: z.string().describe('占位符，请填入任意字符').default('dummy')
             }),
             execute: async () => {
                 try {
