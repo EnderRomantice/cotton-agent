@@ -1,17 +1,17 @@
 import { createOpenAI } from '@ai-sdk/openai';
+import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { config } from '../config.js';
 
 export function getProviderModel(intent: 'fast' | 'smart') {
     const providerContext = config.llm.provider.toLowerCase();
     
-    // DeepSeek 模型对接 (兼容 OpenAI 格式)
+    // DeepSeek 模型对接 (改用官方 Native Provider SDK，避免被抓去撞 OpenAI 专属 Schema 规则导致 400)
     if (providerContext === 'deepseek') {
-        const deepseekProvider = createOpenAI({
-            baseURL: 'https://api.deepseek.com/v1',
+        const dsProvider = createDeepSeek({
             apiKey: config.llm.deepseekApiKey || 'mock-key',
         });
-        return deepseekProvider.chat(intent === 'smart' ? 'deepseek-chat' : 'deepseek-chat');
+        return dsProvider(intent === 'smart' ? 'deepseek-chat' : 'deepseek-chat');
     }
     
     // 阿里千问 Qwen (兼容 OpenAI 格式)
