@@ -1,6 +1,6 @@
 import { generateText } from 'ai';
 import { RconService } from './rconClient.js';
-import { aiProvider } from './aiProvider.js';
+import { getProviderModel } from './aiProvider.js';
 import { createAgentTools } from './tools.js';
 import { getSystemPrompt } from '../prompts/systemPrompt.js';
 
@@ -42,7 +42,7 @@ export class AgentLoop {
         try {
             // 使用速度最快成本最低的模型做压缩 Summarize
             const result = await generateText({
-                model: aiProvider('gpt-4o-mini'), 
+                model: getProviderModel('fast'), 
                 system: 'You are a log summarizer for a Minecraft server. Summarize the following raw logs in 1-3 highly concise sentences in Chinese. Focus ONLY on player actions, deaths, and severe server warnings.',
                 prompt: logsToSummarize.join('\n'),
             });
@@ -78,7 +78,7 @@ export class AgentLoop {
 
             // 主循环模型：不仅可以生成对话，会自动被执行 Tools 并带着结果再次循环推理
             const result = await generateText({
-                model: aiProvider('gpt-4o'), 
+                model: getProviderModel('smart'), 
                 system: sysPrompt,
                 prompt: `以下是当前的局势与日志现场：\n\n${context}\n\n请针对引发唤醒的事件予以处理，你可以静默执行指令，也可以跟玩家对话（如果需要的话）。`,
                 tools: this.tools,

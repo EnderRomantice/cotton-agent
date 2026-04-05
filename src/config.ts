@@ -11,5 +11,8 @@ export const config = {
   llm: {
     provider: process.env.MODEL_PROVIDER || 'openai',
     openaiApiKey: process.env.OPENAI_API_KEY || '',
+    deepseekApiKey: process.env.DEEPSEEK_API_KEY || '',
+    geminiApiKey: process.env.GEMINI_API_KEY || '',
+    qwenApiKey: process.env.QWEN_API_KEY || '',
   }
 };
