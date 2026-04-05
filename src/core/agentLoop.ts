@@ -1,4 +1,4 @@
-import { generateText } from 'ai';
+import { generateText, stepCountIs } from 'ai';
 import { RconService } from './rconClient.js';
 import { getProviderModel } from './aiProvider.js';
 import { createAgentTools } from './tools.js';
@@ -82,6 +82,7 @@ export class AgentLoop {
                 system: sysPrompt,
                 prompt: `以下是当前的局势与日志现场：\n\n${context}\n\n请针对引发唤醒的事件予以处理，你可以静默执行指令，也可以跟玩家对话（如果需要的话）。`,
                 tools: this.tools,
+                stopWhen: stepCountIs(30), // 允许 AI 进行最多 30 轮推理
             });
 
             console.log(`[AgentLoop] 🧠 主逻辑执行闭环结束. \n最终结果阐述: ${result.text}`);
