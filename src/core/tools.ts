@@ -51,7 +51,9 @@ export function createAgentTools(rcon: RconService) {
         }),
         get_online_players: tool({
             description: '查询当前服务器内在线的玩家列表。让你知道你能和谁进行互动或干预。',
-            parameters: z.object({}),
+            parameters: z.object({
+                _dummy: z.string().optional().describe('占位符，避免被引擎解析为 type: null'),
+            }),
             execute: async () => {
                 try {
                     const result = await rcon.executeCommand('list');
