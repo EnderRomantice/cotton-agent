@@ -20,7 +20,7 @@
     "dotenv": "^17.4.0",
     "rcon-client": "^4.2.5",
     "tail": "^2.2.6",
-    "zod": "^4.3.6"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^25.5.2",
