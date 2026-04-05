@@ -8,6 +8,8 @@ export const config = {
     password: process.env.RCON_PASSWORD || '',
   },
   mcLogPath: process.env.MC_LOG_PATH || '',
+  mcServerPath: process.env.MC_SERVER_PATH || '.', // Minecraft 服务器根目录
+  worldName: process.env.WORLD_NAME || 'world', // 服务器世界名称
   llm: {
     provider: process.env.MODEL_PROVIDER || 'openai',
     openaiApiKey: process.env.OPENAI_API_KEY || '',

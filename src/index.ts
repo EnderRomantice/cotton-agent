@@ -2,6 +2,7 @@ import { config } from './config.js';
 import { RconService } from './core/rconClient.js';
 import { AgentLoop } from './core/agentLoop.js';
 import { LogTailer } from './core/logTailer.js';
+import { permissionManager } from './core/permissionManager.js';
 
 async function bootstrap() {
     console.log('='?.repeat(40));
@@ -11,6 +12,9 @@ async function bootstrap() {
     // 1. 初始化 RCON 客户端
     const rconService = new RconService();
     await rconService.connect();
+
+    // 2. 初始化权限管理器并加载权限
+    await permissionManager.loadPermissions();
 
     // 2. 初始化核心逻辑状态机
     const agentLoop = new AgentLoop(rconService);
