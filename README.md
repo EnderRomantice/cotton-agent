@@ -34,6 +34,8 @@ enable-rcon=true
 rcon.port=25575
 rcon.password=你设置的复杂密码
 ```
+> **⚠️ 巨坑预警**：`rcon.password` 绝对不可以为空！如果密码留空，Minecraft 服务端出于安全保护机制，会**默默地直接掐断不启动 RCON 服务**，且不会弹出明显的红字警告。届时 Agent 前去连接只会遭遇无止尽的 `ECONNREFUSED`（连接彻底被拒），因此请一定务必填上至少一位数的密码！
+
 修改完成后，重启你的 Minecraft 服务端进程。
 
 ### 2. 克隆与配置本项目
