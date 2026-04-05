@@ -5,9 +5,9 @@ import { RconService } from './rconClient.js';
 export function createAgentTools(rcon: RconService) {
     return {
         execute_rcon_command: tool({
-            description: '最高权限后门。允许你在 Minecraft 服务器执行任何原生的控制台指令 (例如 weather clear, say hello, give Steve apple)。',
+            description: '最高权限后门。允许你在 Minecraft 服务器执行任何原生的控制台指令 (例如 weather clear, say hello, give Steve apple)。参数 command (string): 必填，你想要执行的命令文本。切记：不要在开头加上 "/" 符号。',
             parameters: z.object({
-                command: z.string().describe('你想要执行的命令文本。切记：不要在开头加上 "/" 符号。'),
+                command: z.string(),
             }),
             execute: async ({ command }) => {
                 try {
@@ -19,9 +19,9 @@ export function createAgentTools(rcon: RconService) {
             },
         }),
         broadcast_message: tool({
-            description: '向全服玩家发送显眼的广播公告。',
+            description: '向全服玩家发送显眼的广播公告。参数 message (string): 必填，广播信息的内容。',
             parameters: z.object({
-                message: z.string().describe('广播信息的内容。'),
+                message: z.string(),
             }),
             execute: async ({ message }) => {
                 try {
@@ -35,10 +35,10 @@ export function createAgentTools(rcon: RconService) {
             },
         }),
         whisper_player: tool({
-            description: '给当前在线的某位特定玩家发送私密消息。',
+            description: '给当前在线的某位特定玩家发送私密消息。参数 playerName (string): 必填，玩家的精准游戏名。参数 message (string): 必填，私密消息的内容。',
             parameters: z.object({
-                playerName: z.string().describe('玩家的精准游戏名。'),
-                message: z.string().describe('私信内容。'),
+                playerName: z.string(),
+                message: z.string(),
             }),
             execute: async ({ playerName, message }) => {
                 try {
@@ -50,9 +50,9 @@ export function createAgentTools(rcon: RconService) {
             },
         }),
         get_online_players: tool({
-            description: '查询当前服务器内在线的玩家列表。让你知道你能和谁进行互动或干预。',
+            description: '查询当前服务器内在线的玩家列表。让你知道你能和谁进行互动或干预。该调用不需要实际有意义的参数，但如果引擎坚持要求，可传入一个随机_dummy。',
             parameters: z.object({
-                _dummy: z.string().optional().describe('占位符，避免被引擎解析为 type: null'),
+                _dummy: z.string().optional()
             }),
             execute: async () => {
                 try {
