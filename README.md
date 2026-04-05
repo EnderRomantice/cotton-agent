@@ -1,4 +1,4 @@
-# Cotton Agent (原 Minecraft AI Agent)
+# Cotton Agent
 
 Cotton Agent 是一个基于 **Node.js + TypeScript + Vercel AI SDK** 开发的独立智能守护程序。
 系统采用“旁路解耦”架构，不侵入服务器进程的生命周期，而是通过读取 `latest.log` 和 RCON 协议与服务器建立“读取感官”和“执行动作”的双边链接，充当自动化运维 AI 或拟人化 NPC 管理员。
@@ -42,7 +42,7 @@ rcon.password=你设置的复杂密码
 ```bash
 # 进入目录，拉取依赖
 cd cotton-agent
-npm install
+pnpm install
 ```
 
 利用样本复制出实际的环境变量参数配置表：
@@ -69,7 +69,7 @@ OPENAI_API_KEY=sk-xxxxxx...
 项目采用纯 TypeScript。您无需经过繁杂的 `tsc` 构建产出阶段，直接使用内置安装好的 `tsx` 在开发环境裸服拉起：
 
 ```bash
-npm run start
+pnpm start
 # 或直接执行: npx tsx src/index.ts
 ```
 
