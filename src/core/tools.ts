@@ -9,6 +9,7 @@ export function createAgentTools(rcon: RconService) {
             parameters: z.object({
                 command: z.string(),
             }),
+            strict: false,
             execute: async ({ command }) => {
                 try {
                     const result = await rcon.executeCommand(command);
@@ -23,6 +24,7 @@ export function createAgentTools(rcon: RconService) {
             parameters: z.object({
                 message: z.string(),
             }),
+            strict: false,
             execute: async ({ message }) => {
                 try {
                     // 使用 tellraw 来实现颜色文本，如果没有 tellraw 可以退化为 say
@@ -40,6 +42,7 @@ export function createAgentTools(rcon: RconService) {
                 playerName: z.string(),
                 message: z.string(),
             }),
+            strict: false,
             execute: async ({ playerName, message }) => {
                 try {
                     const result = await rcon.executeCommand(`tell ${playerName} [AI私信] ${message}`);
@@ -54,6 +57,7 @@ export function createAgentTools(rcon: RconService) {
             parameters: z.object({
                 _dummy: z.string().describe('占位符，请填入任意字符').default('dummy')
             }),
+            strict: false,
             execute: async () => {
                 try {
                     const result = await rcon.executeCommand('list');
