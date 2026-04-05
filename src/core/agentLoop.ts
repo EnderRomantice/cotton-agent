@@ -3,6 +3,8 @@ import { RconService } from './rconClient.js';
 import { getProviderModel } from './aiProvider.js';
 import { createAgentTools } from './tools.js';
 import { getSystemPrompt, AGENT_NAME } from '../prompts/systemPrompt.js';
+import { TaskQueue } from './taskQueue.js';
+import { OpinionManager } from './opinionManager.js';
 
 export class AgentLoop {
     private buffer: string[] = [];
@@ -10,14 +12,22 @@ export class AgentLoop {
     private readonly BUFFER_LIMIT = 100;
     private readonly MAX_SNAPSHOTS = 5;
     private tools: ReturnType<typeof createAgentTools>;
+    public taskQueue: TaskQueue;
+    public opinionManager: OpinionManager;
 
     constructor(private rcon: RconService) {
+        this.taskQueue = new TaskQueue(rcon);
+        this.opinionManager = new OpinionManager(rcon, this.taskQueue);
         // 初始化专属的 Vercel SDK tools
-        this.tools = createAgentTools(rcon);
+        this.tools = createAgentTools(rcon, this.taskQueue, this.opinionManager);
     }
 
     public addLogLine(line: string) {
         this.buffer.push(line);
+
+        // --- 意见征集核心逻辑钩子 ---
+        // 如果当前有正在进行的意见征集，就把日志喂进去
+        this.opinionManager.addLog(line);
 
         // Immediate Interrupt (关键事件拦截唤醒) 
         if (line.includes(`@${AGENT_NAME}`) || line.includes('FATAL') || line.includes('SEVERE')) {
@@ -29,6 +39,13 @@ export class AgentLoop {
         if (this.buffer.length >= this.BUFFER_LIMIT) {
             this.triggerSummarization();
         }
+    }
+
+    /**
+     * Get a slice of the recent logs.
+     */
+    public getRecentLogs(count: number = 20): string[] {
+        return this.buffer.slice(-count);
     }
 
     private async triggerSummarization() {
@@ -74,7 +91,7 @@ export class AgentLoop {
 
         try {
             // 构造最新的系统盘，载入所有动态可用的指令列表和专属名字
-            const sysPrompt = getSystemPrompt(this.rcon.availableCommands);
+            const sysPrompt = await getSystemPrompt(this.rcon.availableCommands);
 
             // 主循环模型：不仅可以生成对话，会自动被执行 Tools 并带着结果再次循环推理
             const result = await generateText({

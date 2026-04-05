@@ -6,8 +6,12 @@ import { AGENT_NAME } from '../prompts/systemPrompt.js';
 import { config } from '../config.js';
 import { permissionManager } from './permissionManager.js';
 import { PermissionLevel, PERMISSION_DEFINITIONS } from './permissions.js';
+import { TaskQueue } from './taskQueue.js';
+import { OpinionManager } from './opinionManager.js';
 
-export function createAgentTools(rcon: RconService): Record<string, Tool<any, any>> {
+export function createAgentTools(rcon: RconService, taskQueue: TaskQueue, opinionManager: OpinionManager): Record<string, Tool<any, any>> {
+    const chatPrefix = `<${AGENT_NAME}> `;
+
     return {
         // --- 权限管理 ---
         get_player_permission: {
@@ -26,66 +30,89 @@ export function createAgentTools(rcon: RconService): Record<string, Tool<any, an
             }
         },
 
-        // --- RCON 指令 ---
+        // --- 任务与指令管理 ---
         execute_rcon_command: {
-            description: '最高权限后门。允许你在 Minecraft 服务器执行任何原生的控制台指令。',
+            description: '执行常规 RCON 指令。对于敏感指令（如修改规则），请优先使用 collect_opinions。',
             inputSchema: jsonSchema({
                 type: 'object',
                 properties: {
                     command: {
                         type: 'string',
-                        description: '你想要执行的命令文本。切记：不要在开头加上 "/" 符号。'
+                        description: '命令文本。不要加 "/"。'
+                    },
+                    description: {
+                        type: 'string',
+                        description: '简单描述你为什么要执行这个指令。'
                     }
                 },
-                required: ['command']
+                required: ['command', 'description']
             }),
-            execute: async ({ command }: { command: string }) => {
+            execute: async ({ command, description }: { command: string, description: string }) => {
                 try {
-                    const result = await rcon.executeCommand(command);
-                    return result || '指令执行成功，服务器没有返回额外输出。';
+                    const result = await taskQueue.executeImmediate('RCON', command, description);
+                    return result || '指令执行成功喵~';
                 } catch (e: any) {
-                    return `指令执行失败 Error: ${e.message}`;
+                    return `执行失败: ${e.message}`;
                 }
             },
         },
-        broadcast_message: {
-            description: '向全服玩家发送显眼的广播公告。',
+        collect_opinions: {
+            description: '发起“意见征集”。当你想要执行敏感指令（修改规则、清空、大规模传送）时，必须通过此工具征求意见。',
             inputSchema: jsonSchema({
                 type: 'object',
                 properties: {
-                    message: {
-                        type: 'string',
-                        description: '广播信息的内容。'
-                    }
+                    command: { type: 'string', description: '待执行的 RCON 指令。' },
+                    description: { type: 'string', description: '为什么要执行这条指令？' }
+                },
+                required: ['command', 'description']
+            }),
+            execute: async ({ command, description }: { command: string, description: string }) => {
+                return await opinionManager.startCollection(command, description);
+            }
+        },
+        broadcast_message: {
+            description: '模拟玩家身份向全服发送消息。看起来就像 <${AGENT_NAME}> 在说话。',
+            inputSchema: jsonSchema({
+                type: 'object',
+                properties: {
+                    message: { type: 'string', description: '消息内容。' }
                 },
                 required: ['message']
             }),
             execute: async ({ message }: { message: string }) => {
                 try {
-                    const parsedMsg = JSON.stringify({ text: `[${AGENT_NAME}] ${message}`, color: "yellow" });
-                    const result = await rcon.executeCommand(`tellraw @a ${parsedMsg}`);
-                    return `广播成功发送。反馈: ${result}`;
+                    // Use tellraw to simulate player chat: <Cotton> message
+                    const tellrawObj = [
+                        { text: `<${AGENT_NAME}> `, color: "white" },
+                        { text: message, color: "white" }
+                    ];
+                    await rcon.executeCommand(`tellraw @a ${JSON.stringify(tellrawObj)}`);
+                    return `消息已播报。`;
                 } catch (e: any) {
-                    return `送广播出错 Error: ${e.message}`;
+                    return `播报失败: ${e.message}`;
                 }
             },
         },
         whisper_player: {
-            description: '给当前在线的某位特定玩家发送私密消息。',
+            description: '给某位玩家发私信。模拟 <${AGENT_NAME}> -> 你 的样式。',
             inputSchema: jsonSchema({
                 type: 'object',
                 properties: {
-                    playerName: { type: 'string', description: '玩家的精准游戏名。' },
-                    message: { type: 'string', description: '私密消息的内容。' }
+                    playerName: { type: 'string', description: '目标玩家。' },
+                    message: { type: 'string', description: '私信内容。' }
                 },
                 required: ['playerName', 'message']
             }),
             execute: async ({ playerName, message }: { playerName: string, message: string }) => {
                 try {
-                    const result = await rcon.executeCommand(`tell ${playerName} [${AGENT_NAME}] ${message}`);
-                    return `私密消息已发送给 ${playerName}。反馈: ${result}`;
+                    const tellrawObj = [
+                        { text: `[${AGENT_NAME} -> 你] `, color: "gray", italic: true },
+                        { text: message, color: "white", italic: true }
+                    ];
+                    await rcon.executeCommand(`tellraw ${playerName} ${JSON.stringify(tellrawObj)}`);
+                    return `私信已送达 ${playerName}。`;
                 } catch (e: any) {
-                    return `发信失败 Error: ${e.message}`;
+                    return `私信失败: ${e.message}`;
                 }
             },
         },
@@ -187,13 +214,13 @@ export function createAgentTools(rcon: RconService): Record<string, Tool<any, an
 
         // --- Minecraft 函数工具 ---
         mc_create_function: {
-            description: '在数据包中创建一个新的 mcfunction。会自动处理数据包路径并触发 /reload。',
+            description: '在数据包中创建一个新的 mcfunction。',
             inputSchema: jsonSchema({
                 type: 'object',
                 properties: {
                     namespace: { type: 'string', description: '命名空间（推荐使用 ai）。' },
-                    name: { type: 'string', description: '函数文件名（不含 .mcfunction）。' },
-                    commands: { type: 'string', description: '多行指令，每行一个。' }
+                    name: { type: 'string', description: '函数文件名。' },
+                    commands: { type: 'string', description: '多行指令。' }
                 },
                 required: ['namespace', 'name', 'commands']
             }),
@@ -210,7 +237,6 @@ export function createAgentTools(rcon: RconService): Record<string, Tool<any, an
                         `${name}.mcfunction`
                     );
 
-                    // 确保 agent_pack 基础结构存在 (mcmeta 等)
                     const datapackRoot = path.join(config.mcServerPath, config.worldName, 'datapacks', 'agent_pack');
                     await fs.mkdir(path.dirname(functionPath), { recursive: true });
                     
@@ -219,19 +245,16 @@ export function createAgentTools(rcon: RconService): Record<string, Tool<any, an
                         await fs.access(mcmetaPath);
                     } catch {
                         const mcmeta = {
-                            pack: {
-                                pack_format: 10,
-                                description: "AI Agent generated tasks"
-                            }
+                            pack: { pack_format: 10, description: "AI Agent generated tasks" }
                         };
                         await fs.writeFile(mcmetaPath, JSON.stringify(mcmeta, null, 2));
                     }
 
                     await fs.writeFile(functionPath, commands, 'utf8');
                     await rcon.executeCommand('reload');
-                    return `函数 ${namespace}:${name} 已创建并加载。你可以通过 run_function 运行它了喵！`;
+                    return `函数 ${namespace}:${name} 已就绪。`;
                 } catch (e: any) {
-                    return `创建函数失败: ${e.message}`;
+                    return `创建失败: ${e.message}`;
                 }
             }
         },
@@ -240,16 +263,16 @@ export function createAgentTools(rcon: RconService): Record<string, Tool<any, an
             inputSchema: jsonSchema({
                 type: 'object',
                 properties: {
-                    functionName: { type: 'string', description: '带命名空间的函数名（如 ai:hell_for_u）。' }
+                    functionName: { type: 'string', description: '函数名（如 ai:task1）。' }
                 },
                 required: ['functionName']
             }),
             execute: async ({ functionName }: { functionName: string }) => {
                 try {
                     const result = await rcon.executeCommand(`function ${functionName}`);
-                    return `函数执行完毕。反馈: ${result}`;
+                    return `函数已运行。反馈: ${result}`;
                 } catch (e: any) {
-                    return `执行函数失败: ${e.message}`;
+                    return `执行失败: ${e.message}`;
                 }
             }
         }
