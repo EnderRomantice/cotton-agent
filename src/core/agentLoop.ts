@@ -2,7 +2,7 @@ import { generateText } from 'ai';
 import { RconService } from './rconClient.js';
 import { getProviderModel } from './aiProvider.js';
 import { createAgentTools } from './tools.js';
-import { getSystemPrompt } from '../prompts/systemPrompt.js';
+import { getSystemPrompt, AGENT_NAME } from '../prompts/systemPrompt.js';
 
 export class AgentLoop {
     private buffer: string[] = [];
@@ -20,7 +20,7 @@ export class AgentLoop {
         this.buffer.push(line);
 
         // Immediate Interrupt (关键事件拦截唤醒) 
-        if (line.includes('@agent') || line.includes('FATAL') || line.includes('SEVERE')) {
+        if (line.includes(`@${AGENT_NAME}`) || line.includes('FATAL') || line.includes('SEVERE')) {
             this.triggerImmediateAction(line);
             return;
         }
@@ -73,7 +73,7 @@ export class AgentLoop {
         ].join('\n');
 
         try {
-            // 构造最新的系统盘，载入所有动态可用的指令列表
+            // 构造最新的系统盘，载入所有动态可用的指令列表和专属名字
             const sysPrompt = getSystemPrompt(this.rcon.availableCommands);
 
             // 主循环模型：不仅可以生成对话，会自动被执行 Tools 并带着结果再次循环推理
