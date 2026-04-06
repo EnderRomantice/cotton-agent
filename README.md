@@ -1,6 +1,6 @@
 [中文版](README_zh.md)
 
-# Cotton Agent: AI-Powered Minecraft Server Administrator
+# Cotton Agent
 
 Cotton Agent is an independent intelligent daemon based on **Node.js + TypeScript + Vercel AI SDK**. It acts as an automated O&M AI or a humanoid NPC administrator by interfacing with server logs and RCON, without intruding into the server process lifecycle.
 
