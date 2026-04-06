@@ -1,6 +1,6 @@
 [English Version](README.md)
 
-# Cotton Agent: 基于 AI 的 Minecraft 服务器管理员
+# Cotton Agent
 
 Cotton Agent 是一个基于 **Node.js + TypeScript + Vercel AI SDK** 开发的独立智能守护程序。它通过读取日志和 RCON 协议与服务器建立链接，充当自动化运维 AI 或拟人化 NPC 管理员，且完全不侵入服务器进程。
 
