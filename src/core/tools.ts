@@ -8,6 +8,8 @@ import { permissionManager } from './permissionManager.js';
 import { PermissionLevel, PERMISSION_DEFINITIONS } from './permissions.js';
 import { TaskQueue } from './taskQueue.js';
 import { OpinionManager } from './opinionManager.js';
+import { playerMemoryManager as memoryManager } from './playerMemoryManager.js';
+import { statsManager } from './statsManager.js';
 
 export function createAgentTools(rcon: RconService, taskQueue: TaskQueue, opinionManager: OpinionManager): Record<string, Tool<any, any>> {
     const chatPrefix = `<${AGENT_NAME}> `;
@@ -27,6 +29,75 @@ export function createAgentTools(rcon: RconService, taskQueue: TaskQueue, opinio
                 const level = permissionManager.getPlayerLevel(playerName);
                 const def = PERMISSION_DEFINITIONS[level];
                 return `玩家 ${playerName} 的权限等级为: ${level} (${def.description})`;
+            }
+        },
+        request_player_upgrade: {
+            description: '【重要】由 AI 发起的玩家等级晋升。你可以根据玩家的表现将他们从 C 升级到 B，或从 B 升级到 A。绝对禁止升级到 S。',
+            inputSchema: jsonSchema({
+                type: 'object',
+                properties: {
+                    playerName: { type: 'string', description: '玩家名。' },
+                    targetLevel: { type: 'string', enum: ['B', 'A'], description: '目标等级。B 为信任玩家，A 为高级合伙人。' },
+                    reason: { type: 'string', description: '为什么要给其升级？' }
+                },
+                required: ['playerName', 'targetLevel', 'reason']
+            }),
+            execute: async ({ playerName, targetLevel, reason }: { playerName: string, targetLevel: string, reason: string }) => {
+                if (targetLevel === 'S') return '❌ 拒绝操作：AI 禁止赋予玩家 S 级权限。';
+                
+                const currentLevel = permissionManager.getPlayerLevel(playerName);
+                await permissionManager.setPlayerLevel(playerName, targetLevel as PermissionLevel);
+                
+                const msg = `权限变更：由于 ${reason}，玩家 ${playerName} 已从 ${currentLevel} 级晋升至 ${targetLevel} 极其所属权限组！`;
+                await rcon.executeCommand(`tellraw @a ${JSON.stringify({ text: msg, color: "gold" })}`);
+                return `已成功将 ${playerName} 升级为 ${targetLevel}。`;
+            }
+        },
+
+        get_player_objective_stats: {
+            description: '调取玩家的硬性客观统计数据（游玩时长、死亡次数）。在评估升职加薪（权限晋升）时，请务必以此为准。',
+            inputSchema: jsonSchema({
+                type: 'object',
+                properties: {
+                    playerName: { type: 'string', description: '玩家名。' }
+                },
+                required: ['playerName']
+            }),
+            execute: async ({ playerName }: { playerName: string }) => {
+                const stats = await statsManager.getPlayerStats(playerName);
+                if (!stats) return `找不到玩家 ${playerName} 的统计数据。呵，大概是刚入职的新白丁吧。`;
+                return `玩家 ${playerName} 的客观数据：累计游玩 ${stats.playtimeHours} 小时，死亡 ${stats.deaths} 次。`;
+            }
+        },
+
+        // --- 玩家记忆系统 ---
+        recall_player_memory: {
+            description: '调取特定玩家的档案（Markdown）。当你需要深入了解某位“尊贵客户”、给予针对性讽刺（划掉）回复或决定是否升级时，请先调用此项。',
+            inputSchema: jsonSchema({
+                type: 'object',
+                properties: {
+                    playerName: { type: 'string', description: '玩家名。' }
+                },
+                required: ['playerName']
+            }),
+            execute: async ({ playerName }: { playerName: string }) => {
+                const content = await memoryManager.getMemory(playerName);
+                return content || `尚无关于玩家 ${playerName} 的任何存档。呵，这是一张苍白的职场新面孔。`;
+            }
+        },
+        update_player_memory: {
+            description: '更新或创建玩家的个人记忆档案（Markdown）。请尽量采用结构化的内容记录，包含其喜好、过往互动、当前状态等。',
+            inputSchema: jsonSchema({
+                type: 'object',
+                properties: {
+                    playerName: { type: 'string', description: '玩家名。' },
+                    content: { type: 'string', description: '最新的档案全文。建议包含历史总结，因为这会覆盖旧文档。' }
+                },
+                required: ['playerName', 'content']
+            }),
+            execute: async ({ playerName, content }: { playerName: string, content: string }) => {
+                await memoryManager.setMemory(playerName, content);
+                return `已更新玩家 ${playerName} 的档案。`;
             }
         },
 
@@ -50,9 +121,9 @@ export function createAgentTools(rcon: RconService, taskQueue: TaskQueue, opinio
             execute: async ({ command, description }: { command: string, description: string }) => {
                 try {
                     const result = await taskQueue.executeImmediate('RCON', command, description);
-                    return result || '指令执行成功喵~';
+                    return result || '指令执行完毕（呵，又是一次无趣的劳动）。';
                 } catch (e: any) {
-                    return `执行失败: ${e.message}`;
+                    return `执行失败: ${e.message}（真麻烦，服务器又在闹脾气了）。`;
                 }
             },
         },
