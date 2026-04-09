@@ -1,3 +1,5 @@
+<img width="2816" height="1536" alt="Cotton Agent" src="https://github.com/user-attachments/assets/ca8a2ad6-a2f1-4ed9-ba72-ed36a441bf8d" />
+
 [English Version](README.md)
 
 # Cotton Agent
