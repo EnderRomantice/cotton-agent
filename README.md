@@ -4,7 +4,6 @@
 
 Cotton Agent is an independent intelligent daemon based on **Node.js + TypeScript + Vercel AI SDK**. It acts as an automated O&M AI or a humanoid NPC administrator by interfacing with server logs and RCON, without intruding into the server process lifecycle.
 
----
 
 ## ✨ Core Features
 
@@ -16,7 +15,6 @@ Cotton Agent is an independent intelligent daemon based on **Node.js + TypeScrip
 *   **Player Memory [NEW]**: Individual Markdown-based profiles for each player to track preferences and interaction history.
 *   **Permission Scaling [NEW]**: AI-driven player upgrades (Level C -> A) based on behavior and contributions (Max level A restricted).
 
----
 
 ## 🏗️ Architecture
 
@@ -27,7 +25,6 @@ The agent operates as a **fully decoupled service**:
 3.  **Tool System**: Dynamic injection of RCON commands and file operations.
 4.  **Player Manager**: Persistent storage of player profiles and memory.
 
----
 
 ## 🚀 Getting Started
 
@@ -61,7 +58,6 @@ OPENAI_API_KEY=sk-...
 pnpm start
 ```
 
----
 
 ## 🛠️ Development
 
